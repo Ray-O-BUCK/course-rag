@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+data/chroma/
+models/
+eval/data/
+eval/results/
+data/ingest_state.json

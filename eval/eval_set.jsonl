@@ -1,0 +1,20 @@
+{"query":"什么是反向传播","relevant_docs":["nn.md"]}
+{"query":"梯度消失怎么解决","relevant_docs":["nn.md"]}
+{"query":"注意力机制公式是什么","relevant_docs":["transformer.md"]}
+{"query":"多头注意力的作用","relevant_docs":["transformer.md"]}
+{"query":"位置编码为什么需要","relevant_docs":["transformer.md"]}
+{"query":"项目用什么向量库","relevant_docs":["project.md"]}
+{"query":"分块策略是什么","relevant_docs":["project.md"]}
+{"query":"拒答机制怎么触发","relevant_docs":["project.md"]}
+{"query":"本项目用什么损失函数","relevant_docs":["nn.md"]}
+{"query":"bge 模型用在哪","relevant_docs":["project.md"]}
+{"query":"ResNet 是什么","relevant_docs":["nn.md"]}
+{"query":"LSTM 用在哪里","relevant_docs":["nn.md"]}
+{"query":"softmax 为什么除以 sqrt(d_k)","relevant_docs":["transformer.md"]}
+{"query":"RoPE 是什么","relevant_docs":["transformer.md"]}
+{"query":"Chroma 是什么","relevant_docs":["project.md"]}
+{"query":"今天天气怎么样","relevant_docs":[]}
+{"query":"如何做红烧肉","relevant_docs":[]}
+{"query":"股票会涨吗","relevant_docs":[]}
+{"query":"梅西效力哪个球队","relevant_docs":[]}
+{"query":"量子力学是什么","relevant_docs":[]}
