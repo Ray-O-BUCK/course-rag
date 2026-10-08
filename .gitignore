@@ -6,3 +6,7 @@ models/
 eval/data/
 eval/results/
 data/ingest_state.json
+# 抓取的开源语料:CC BY-SA 正文不进公开仓库,靠 scripts/fetch_corpus.py 复现
+data/raw/fetched/
+# 改评测集前的备份(calibrate/append 脚本产出),只在本地留
+*.bak

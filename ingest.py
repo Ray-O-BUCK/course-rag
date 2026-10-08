@@ -1,11 +1,8 @@
-import chromadb
 from pathlib import Path
 from chunker import chunk_text
+from config import BASE_DIR, CHUNK_OVERLAP, CHUNK_SIZE
+from db import collection
 from embedder import embed
-from config import CHROMA_PATH,CHUNK_SIZE,CHUNK_OVERLAP,BASE_DIR
-
-client = chromadb.PersistentClient(path = CHROMA_PATH)
-collection = client.get_or_create_collection("course_docs")
 
 def ingest_file(path: str,doc_name: str):
     text = Path(path).read_text(encoding = "utf-8")
@@ -21,7 +18,11 @@ def ingest_file(path: str,doc_name: str):
 
 def ingest_all():
     raw_dir = BASE_DIR / "data" / "raw"
-    for f in raw_dir.glob("*"):
+    # rglob 不是 glob:开源语料在 data/raw/fetched/ 子目录里,glob("*") 看不到。
+    # doc_name 用扁平文件名 —— fetch_corpus.py 已经把目录层级拼进文件名了
+    # (d2l-zh__chapter_xxx__yyy.md),所以跨目录不会撞名。
+    # sorted 保证入库顺序确定,复现时块 id 不会因文件系统枚举顺序漂移。
+    for f in sorted(raw_dir.rglob("*")):
         if f.suffix.lower() in (".md", ".txt"):
             ingest_file(str(f), f.name)
 

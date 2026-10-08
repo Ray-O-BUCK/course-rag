@@ -26,5 +26,5 @@ if st.button("查询") and q:
     st.write(result["answer"])
     with st.expander("引用来源"):
         for s in result["sources"]:
-            st.markdown(f"**{s['doc']}#{s['chunk_id']}**  distance = {s['distance']:.3f}")
-            st.text(s["text"][:300])
+            st.markdown(f"**{s.doc}#{s.chunk_id}**  distance = {s.vector_distance:.3f}")
+            st.text(s.text[:300])

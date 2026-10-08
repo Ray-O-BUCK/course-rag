@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ingest import collection
-from rag import retrieve, answer
+from db import collection
+from rag import pipeline,answer
 
 EVAL_SET_PATH = Path(__file__).resolve().parent / "eval_set.jsonl"
 
@@ -35,8 +35,8 @@ def eval_recall(items: list[dict]) -> None:
         if not item["relevant_docs"]:
             continue
         total += 1
-        docs = retrieve(item["query"], top_k=TOP_K)
-        retrieved_docs = [d["doc"] for d in docs]
+        docs = pipeline.retrieve(item["query"], k=TOP_K)
+        retrieved_docs = [d.doc for d in docs]
         hit = any(rd in retrieved_docs for rd in item["relevant_docs"])
         print(f"{'✓' if hit else '✗'} {item['query']}")
         print(f"   期望: {item['relevant_docs']}")
@@ -79,7 +79,7 @@ def eval_citation(items: list[dict]) -> None:
         res = answer(item["query"])
         cites = CITE_PATTERN.findall(res["answer"])  # [(file, chunk_id), ...]
         # 本次检索结果中真实存在的 (文件, 块) 集合
-        retrieved_keys = {(d["doc"], str(d["chunk_id"])) for d in res["sources"]}
+        retrieved_keys = {(d.doc, str(d.chunk_id)) for d in res["sources"]}
 
         valid = bool(cites) and all(key in retrieved_keys for key in cites)
         cited_docs = {doc for doc, _ in cites}

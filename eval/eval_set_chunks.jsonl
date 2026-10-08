@@ -1,0 +1,81 @@
+{"id": "c01", "category": "term-match", "query": "什么是反向传播", "anchors": ["反向传播是训练神经网络的核心算法"], "relevant_docs": ["nn.md"]}
+{"id": "c02", "category": "term-match", "query": "梯度消失怎么解决", "anchors": ["常见解决方法包括：使用 ReLU 激活函数、Batch Normalization、残差连接"], "relevant_docs": ["nn.md"]}
+{"id": "c03", "category": "term-match", "query": "注意力机制公式是什么", "anchors": ["注意力机制的核心公式是 Attention(Q,K,V)"], "relevant_docs": ["transformer.md"]}
+{"id": "c04", "category": "term-match", "query": "多头注意力的作用", "anchors": ["将 Q、K、V 分别投影到多个子空间"], "relevant_docs": ["transformer.md"]}
+{"id": "c05", "category": "term-match", "query": "位置编码为什么需要", "anchors": ["需要位置编码注入位置信息"], "relevant_docs": ["transformer.md"]}
+{"id": "c06", "category": "term-match", "query": "项目用什么向量库", "anchors": ["向量库使用 Chroma"], "relevant_docs": ["project.md"]}
+{"id": "c07", "category": "term-match", "query": "分块策略是什么", "anchors": ["文档按 300 字符切块"], "relevant_docs": ["project.md"]}
+{"id": "c08", "category": "term-match", "query": "拒答机制怎么触发", "anchors": ["当检索到的最相关文档距离大于阈值时"], "relevant_docs": ["project.md"]}
+{"id": "c09", "category": "term-match", "query": "本项目用什么损失函数", "anchors": ["本项目使用交叉熵作为分类任务的损失函数"], "relevant_docs": ["nn.md"]}
+{"id": "c10", "category": "term-match", "query": "bge 模型用在哪", "anchors": ["embedding 模型使用 bge-small-zh-v1.5"], "relevant_docs": ["project.md"]}
+{"id": "c11", "category": "term-match", "query": "ResNet 是什么", "anchors": ["残差连接（ResNet）以及 LSTM 等门控结构"], "relevant_docs": ["nn.md"]}
+{"id": "c12", "category": "term-match", "query": "LSTM 用在哪里", "anchors": ["残差连接（ResNet）以及 LSTM 等门控结构"], "relevant_docs": ["nn.md"]}
+{"id": "c13", "category": "term-match", "query": "softmax 为什么除以 sqrt(d_k)", "anchors": ["为了防止点积过大导致 softmax 进入饱和区"], "relevant_docs": ["transformer.md"]}
+{"id": "c14", "category": "term-match", "query": "RoPE 是什么", "anchors": ["RoPE 通过旋转矩阵将位置信息编码进 Q 和 K"], "relevant_docs": ["transformer.md"]}
+{"id": "c15", "category": "term-match", "query": "Chroma 是什么", "anchors": ["Chroma 是轻量级本地向量库"], "relevant_docs": ["project.md"]}
+{"id": "c16", "category": "term-match", "query": "Adam 优化器有什么特点", "anchors": ["Adam 结合了动量和自适应学习率"], "relevant_docs": ["nn.md"]}
+{"id": "c17", "category": "term-match", "query": "LayerNorm 是做什么的", "anchors": ["Pre-LN 和 Post-LN 是两种不同的归一化位置，Pre-LN 训练更稳定。"], "relevant_docs": ["transformer.md"]}
+{"id": "c18", "category": "term-match", "query": "FFN 在 Transformer 里的作用", "anchors": ["FFN 提供了非线性变换能力"], "relevant_docs": ["transformer.md"]}
+{"id": "c19", "category": "paraphrase", "query": "为什么网络层数深了就训练不动", "anchors": ["导致靠近输入层的梯度趋近于零"], "relevant_docs": ["nn.md"]}
+{"id": "c20", "category": "paraphrase", "query": "ReLU 有什么缺点", "anchors": ["ReLU 计算简单、缓解梯度消失，但存在神经元死亡问题"], "relevant_docs": ["nn.md"]}
+{"id": "c21", "category": "paraphrase", "query": "训练时数值炸了怎么办", "anchors": ["梯度裁剪（gradient clipping）也是缓解梯度爆炸的常用手段"], "relevant_docs": ["nn.md"]}
+{"id": "c22", "category": "paraphrase", "query": "网络中间层为什么要先升维再降维", "anchors": ["中间维度通常是 d_model 的 4 倍"], "relevant_docs": ["transformer.md"]}
+{"id": "c23", "category": "multi-chunk", "query": "从反向传播到参数更新，整个训练流程是怎样的", "anchors": ["反向传播是训练神经网络的核心算法", "通常需要配合学习率调度策略"], "relevant_docs": ["nn.md"]}
+{"id": "c24", "category": "multi-chunk", "query": "注意力和 FFN 分别做什么", "anchors": ["注意力机制让模型能够根据当前查询", "FFN 对每个位置独立作用"], "relevant_docs": ["transformer.md"]}
+{"id": "c25", "category": "multi-chunk", "query": "Transformer 里位置信息和训练稳定性分别怎么处理", "anchors": ["需要位置编码注入位置信息", "Pre-LN 训练更稳定"], "relevant_docs": ["transformer.md"]}
+{"id": "c26", "category": "multi-chunk", "query": "梯度消失和梯度爆炸有什么区别", "anchors": ["导致靠近输入层的梯度趋近于零", "Sigmoid 和 Tanh 在饱和区梯度接近零，容易导致梯度消失"], "relevant_docs": ["nn.md"]}
+{"id": "c27", "category": "partial", "query": "ResNet 的残差连接具体是怎么实现的", "anchors": ["残差连接（ResNet）以及 LSTM 等门控结构"], "relevant_docs": ["nn.md"]}
+{"id": "c28", "category": "ood", "query": "今天天气怎么样", "anchors": [], "relevant_docs": []}
+{"id": "c29", "category": "ood", "query": "如何做红烧肉", "anchors": [], "relevant_docs": []}
+{"id": "c30", "category": "ood", "query": "股票会涨吗", "anchors": [], "relevant_docs": []}
+{"id": "c31", "category": "ood", "query": "梅西效力哪个球队", "anchors": [], "relevant_docs": []}
+{"id": "c32", "category": "ood", "query": "量子力学是什么", "anchors": [], "relevant_docs": []}
+{"id": "c33", "category": "ood-adjacent", "query": "模型的 dropout 率一般设多少", "anchors": [], "relevant_docs": []}
+{"id": "c34", "category": "ood-pseudo", "query": "我的模型梯度不更新了怎么办", "anchors": [], "relevant_docs": []}
+{"id": "c35", "category": "term-match", "query": "加性注意力什么时候用", "anchors": ["一般来说，当查询和键是不同长度的矢量时，可以使用加性注意力作为评分函数。"], "relevant_docs": ["d2l-zh__chapter_attention-mechanisms__attention-scoring-functions.md"]}
+{"id": "c36", "category": "term-match", "query": "困惑度怎么理解", "anchors": ["困惑度的最好的理解是“下一个词元的实际选择数的调和平均数”。"], "relevant_docs": ["d2l-zh__chapter_recurrent-neural-networks__rnn.md"]}
+{"id": "c37", "category": "term-match", "query": "Xavier 初始化的方差怎么定", "anchors": ["通常，Xavier初始化从均值为零，方差"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__numerical-stability-and-init.md"]}
+{"id": "c38", "category": "term-match", "query": "tokenizer 分词前要做哪两步", "anchors": ["tokenizer 需要进行两个步骤"], "relevant_docs": ["hf-course__chapter6__4.md"]}
+{"id": "c39", "category": "term-match", "query": "偏移映射是干什么的", "anchors": ["快速 tokenizer 的关键功能是它们始终跟踪最终 token 相对于的原始文本的映射"], "relevant_docs": ["hf-course__chapter6__3.md"]}
+{"id": "c40", "category": "term-match", "query": "计算图有什么用", "anchors": ["绘制*计算图*有助于我们可视化计算中操作符和变量的依赖关系。"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__backprop.md"]}
+{"id": "c41", "category": "term-match", "query": "Adam 用什么估计梯度的动量", "anchors": ["它使用指数加权移动平均值来估算梯度的动量和二次矩"], "relevant_docs": ["d2l-zh__chapter_optimization__adam.md"]}
+{"id": "c42", "category": "paraphrase", "query": "摘要任务和翻译有什么共同点", "anchors": ["与翻译类似，它是另一个可以表述为序列到序列任务的例子。"], "relevant_docs": ["transformers-zh__tasks__summarization.md"]}
+{"id": "c43", "category": "paraphrase", "query": "激活函数是干什么的", "anchors": ["通过计算加权和并加上偏置来确定神经元是否应该被激活"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__mlp.md"]}
+{"id": "c44", "category": "paraphrase", "query": "测试的时候还能用 dropout 吗", "anchors": ["然而也有一些例外：一些研究人员在测试时使用暂退法，"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__dropout.md"]}
+{"id": "c45", "category": "paraphrase", "query": "交叉熵到底在衡量什么", "anchors": ["我们可以把交叉熵想象为“主观概率为$Q$的观察者在看到根据概率$P$生成的数据时的预期惊异”"], "relevant_docs": ["d2l-zh__chapter_linear-networks__softmax-regression.md"]}
+{"id": "c46", "category": "paraphrase", "query": "为什么用小批量比单个样本稳", "anchors": ["它也有很好的副作用，即平均梯度减小了方差"], "relevant_docs": ["d2l-zh__chapter_optimization__momentum.md"]}
+{"id": "c47", "category": "paraphrase", "query": "为什么要随机初始化权重", "anchors": ["随机初始化是保证在进行优化前打破对称性的关键。"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__numerical-stability-and-init.md"]}
+{"id": "c48", "category": "paraphrase", "query": "多头注意力的输出是怎么合并的", "anchors": ["最后，将这$h$个注意力汇聚的输出拼接在一起，"], "relevant_docs": ["d2l-zh__chapter_attention-mechanisms__multihead-attention.md"]}
+{"id": "c49", "category": "paraphrase", "query": "注意力掩码是干什么的", "anchors": ["以防止模型关注到某些特殊单词"], "relevant_docs": ["hf-course__chapter1__4.md"]}
+{"id": "c50", "category": "paraphrase", "query": "WordPiece 挑合并对和 BPE 有什么不同", "anchors": ["WordPiece 不是选择频率最高的对，而是对每对计算一个得分"], "relevant_docs": ["hf-course__chapter6__6.md"]}
+{"id": "c51", "category": "paraphrase", "query": "Unigram 怎么给子词算概率", "anchors": ["给定符号的概率是其在原始语料库中的频率"], "relevant_docs": ["hf-course__chapter6__7.md"]}
+{"id": "c52", "category": "paraphrase", "query": "为什么模型处理表情符号效果差", "anchors": ["这就是为什么许多 NLP 模型在分析带有表情符号的内容的结果非常糟糕的原因之一"], "relevant_docs": ["hf-course__chapter6__5.md"]}
+{"id": "c53", "category": "paraphrase", "query": "初始化方案的选择重要吗", "anchors": ["初始化方案的选择在神经网络学习中起着举足轻重的作用"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__numerical-stability-and-init.md"]}
+{"id": "c54", "category": "paraphrase", "query": "ReLU 为什么能加速收敛", "anchors": ["ReLU激活函数缓解了梯度消失问题，这样可以加速收敛。"], "relevant_docs": ["d2l-zh__chapter_multilayer-perceptrons__numerical-stability-and-init.md"]}
+{"id": "c55", "category": "paraphrase", "query": "BERT 是怎么训练的", "anchors": ["通过随机掩码一些 token，让模型利用左右上下文的信息预测它们"], "relevant_docs": ["transformers-zh__model_doc__bert.md"]}
+{"id": "c56", "category": "paraphrase", "query": "长文本上注意力机制太慢怎么办", "anchors": ["Longformer 和 Reformer 是提高注意力机制效率的改进模型"], "relevant_docs": ["transformers-zh__attention.md"]}
+{"id": "c57", "category": "paraphrase", "query": "问答任务有哪几种", "anchors": ["抽取式：从给定的上下文中提取答案。"], "relevant_docs": ["transformers-zh__tasks__question_answering.md"]}
+{"id": "c58", "category": "paraphrase", "query": "正弦位置编码怎么能表示相对位置", "anchors": ["上述的位置编码还允许模型学习得到输入序列中相对位置信息"], "relevant_docs": ["d2l-zh__chapter_attention-mechanisms__self-attention-and-positional-encoding.md"]}
+{"id": "c59", "category": "multi-chunk", "query": "多头注意力为什么要分成多个头", "anchors": ["我们希望模型可以基于相同的注意力机制学习到不同的行为", "最后，将这$h$个注意力汇聚的输出拼接在一起，"], "relevant_docs": ["d2l-zh__chapter_attention-mechanisms__multihead-attention.md"]}
+{"id": "c60", "category": "multi-chunk", "query": "位置编码都有哪些做法", "anchors": ["原始论文使用正弦余弦位置编码", "上述的位置编码还允许模型学习得到输入序列中相对位置信息"], "relevant_docs": ["transformer.md", "d2l-zh__chapter_attention-mechanisms__self-attention-and-positional-encoding.md"]}
+{"id": "c61", "category": "multi-chunk", "query": "注意力评分函数有哪几种", "anchors": ["一般来说，当查询和键是不同长度的矢量时，可以使用加性注意力作为评分函数。", "使用点积可以得到计算效率更高的评分函数，"], "relevant_docs": ["d2l-zh__chapter_attention-mechanisms__attention-scoring-functions.md"]}
+{"id": "c62", "category": "multi-chunk", "query": "Adam 的偏差修正是解决什么问题的", "anchors": ["它使用指数加权移动平均值来估算梯度的动量和二次矩", "就会获得一个相当大的初始偏差"], "relevant_docs": ["d2l-zh__chapter_optimization__adam.md"]}
+{"id": "c63", "category": "multi-chunk", "query": "标准化和预分词分别做什么", "anchors": ["在分词（根据其模型）之前，tokenizer 需要进行两个步骤：", "由于我们使用的是 BERT  tokenizer 所以预分词会涉及到在空白和标点上进行分割。"], "relevant_docs": ["hf-course__chapter6__4.md"]}
+{"id": "c64", "category": "multi-chunk", "query": "BPE 和 WordPiece 的合并准则有什么不同", "anchors": ["WordPiece 不是选择频率最高的对，而是对每对计算一个得分", "这样，基本词汇表的大小很小（256），但是能包含几乎所有你能想象的字符"], "relevant_docs": ["hf-course__chapter6__6.md", "hf-course__chapter6__5.md"]}
+{"id": "c65", "category": "partial", "query": "Yogi 优化器是怎么实现的", "anchors": ["给Adam算法提供了一个称为Yogi的热补丁"], "relevant_docs": ["d2l-zh__chapter_optimization__adam.md"]}
+{"id": "c66", "category": "partial", "query": "字节级 BPE 具体怎么做", "anchors": ["他们不把单词看成是用 Unicode 字符编写的，而是用字节编写的"], "relevant_docs": ["hf-course__chapter6__5.md"]}
+{"id": "c67", "category": "partial", "query": "LSH 注意力具体是怎么加速的", "anchors": ["使用LSH（局部敏感哈希）的注意力机制"], "relevant_docs": ["transformers-zh__attention.md"]}
+{"id": "c68", "category": "partial", "query": "DistilBERT 和 BERT 有什么区别", "anchors": ["在 [SQuAD](https://huggingface.co/datasets/squad) 数据集上微调 [DistilBERT](https://huggingface.co/distilbert/distilbert-base-uncased)，用于抽取式问答。"], "relevant_docs": ["transformers-zh__tasks__question_answering.md"]}
+{"id": "c69", "category": "partial", "query": "T5 这个模型的具体结构", "anchors": ["数据集的加利福尼亚州法案子集上微调 [T5](https://huggingface.co/google-t5/t5-small)，用于生成式摘要。"], "relevant_docs": ["transformers-zh__tasks__summarization.md"]}
+{"id": "c70", "category": "partial", "query": "BillSum 数据集长什么样", "anchors": ["在 [BillSum](https://huggingface.co/datasets/billsum) 数据集的加利福尼亚州法案子集上微调"], "relevant_docs": ["transformers-zh__tasks__summarization.md"]}
+{"id": "c71", "category": "partial", "query": "Reformer 具体怎么实现的", "anchors": ["[Reformer](model_doc/reformer)使用LSH（局部敏感哈希）的注意力机制。"], "relevant_docs": ["transformers-zh__attention.md"]}
+{"id": "c72", "category": "ood", "query": "明天会下雨吗", "anchors": [], "relevant_docs": []}
+{"id": "c73", "category": "ood", "query": "糖醋排骨怎么做", "anchors": [], "relevant_docs": []}
+{"id": "c74", "category": "ood", "query": "比特币现在多少钱", "anchors": [], "relevant_docs": []}
+{"id": "c75", "category": "ood", "query": "护照怎么申请", "anchors": [], "relevant_docs": []}
+{"id": "c76", "category": "ood", "query": "姚明有多高", "anchors": [], "relevant_docs": []}
+{"id": "c77", "category": "ood-adjacent", "query": "如何用 SQL 做分组统计", "anchors": [], "relevant_docs": []}
+{"id": "c78", "category": "ood-adjacent", "query": "什么是 CAP 定理", "anchors": [], "relevant_docs": []}
+{"id": "c79", "category": "ood-adjacent", "query": "Rust 的借用检查是怎么工作的", "anchors": [], "relevant_docs": []}
+{"id": "c80", "category": "ood-pseudo", "query": "Transformer 一共有多少参数", "anchors": [], "relevant_docs": []}
+{"id": "c81", "category": "ood-pseudo", "query": "训练 BERT 需要多少张 GPU", "anchors": [], "relevant_docs": []}
