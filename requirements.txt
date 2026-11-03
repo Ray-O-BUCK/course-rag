@@ -3,3 +3,8 @@ python-dotenv>=1.0
 chromadb>=0.4.22
 sentence-transformers>=2.6.0
 streamlit>=1.33
+jieba>=0.42.1
+
+# 开发/验证用,运行时不需要:
+#   rank_bm25  给 scripts/compare_bm25.py 做对拍
+#   pip install rank_bm25

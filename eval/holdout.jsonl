@@ -1,0 +1,20 @@
+{"id":"h01","category":"term-match","query":"zero-shot-classification 怎么指定分类标签？","anchors":["它允许你直接指定用于分类的标签"],"relevant_docs":["hf-course__chapter1__3.md"]}
+{"id":"h02","category":"term-match","query":"text-generation 用哪个参数控制输出文本总长度？","anchors":["控制输出文本的总长度"],"relevant_docs":["hf-course__chapter1__3.md"]}
+{"id":"h03","category":"term-match","query":"NER pipeline 里 aggregation_strategy='simple' 在做什么？","anchors":["将与同一实体对应的句子部分重新分组"],"relevant_docs":["hf-course__chapter1__3.md"]}
+{"id":"h04","category":"term-match","query":"WordPiece 什么时候返回 unk_token？","anchors":["当模型遇到它从未见过的字符时"],"relevant_docs":["hf-course__chapter6__8.md"]}
+{"id":"h05","category":"term-match","query":"GPT-2 的 BPE 为什么不需要 unk_token？","anchors":["GPT-2 使用字节级 BPE，这不需要它"],"relevant_docs":["hf-course__chapter6__8.md"]}
+{"id":"h06","category":"term-match","query":"UnigramTrainer 的 shrinking_factor 默认值是多少？","anchors":["默认为 0.75"],"relevant_docs":["hf-course__chapter6__8.md"]}
+{"id":"h07","category":"paraphrase","query":"不微调模型也能直接给文本分类的 pipeline 是什么？","anchors":["你不需要对数据上的模型进行微调即可使用它"],"relevant_docs":["hf-course__chapter1__3.md"]}
+{"id":"h08","category":"paraphrase","query":"为什么解码器模型被称为自回归模型？","anchors":["注意力层只能获取到句子中位于将要预测单词前面的单词"],"relevant_docs":["hf-course__chapter1__6.md"]}
+{"id":"h09","category":"paraphrase","query":"编码器-解码器模型最适合哪类任务？","anchors":["序列到序列模型最适合于围绕根据给定输入生成新句子的任务"],"relevant_docs":["hf-course__chapter1__7.md"]}
+{"id":"h10","category":"paraphrase","query":"分词器在模型输入前做了什么？","anchors":["分词器负责预处理文本，将文本转换为用于输入模型的数字数组"],"relevant_docs":["transformers-zh__quicktour.md"]}
+{"id":"h11","category":"paraphrase","query":"模型输出 logits 后怎么得到概率？","anchors":["应用 softmax 函数来查询概率"],"relevant_docs":["transformers-zh__quicktour.md"]}
+{"id":"h12","category":"multi-chunk","query":"编码器、解码器、编码器-解码器三类模型分别适合什么任务？","anchors":["适用于需要理解完整句子的任务","这些模型最适合处理文本生成的任务","序列到序列模型最适合于围绕根据给定输入生成新句子的任务"],"relevant_docs":["hf-course__chapter1__5.md","hf-course__chapter1__6.md","hf-course__chapter1__7.md"]}
+{"id":"h13","category":"multi-chunk","query":"WordPiece、BPE、Unigram 三种 tokenizer 分别用什么预分词器？","anchors":["预构建的 `BertPreTokenizer`","tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel","任何 SentencePiece tokenizer 使用的预 tokenizer 是 `Metaspace`"],"relevant_docs":["hf-course__chapter6__8.md"]}
+{"id":"h14","category":"multi-chunk","query":"BERT、GPT-2、XLNet 三种 tokenizer 的 normalizer 设置有什么不同？","anchors":["tokenizer.normalizer = normalizers.BertNormalizer(lowercase=True)","GPT-2 不使用 `normalizer`","XLNet 进行了一些替换"],"relevant_docs":["hf-course__chapter6__8.md"]}
+{"id":"h15","category":"partial","query":"ALBERT 和 BERT 有什么区别？","anchors":["[ALBERT](https://huggingface.co/transformers/model_doc/albert)"],"relevant_docs":["hf-course__chapter1__5.md"]}
+{"id":"h16","category":"partial","query":"Marian 支持哪些语言？","anchors":["[Marian](https://huggingface.co/transformers/model_doc/marian)"],"relevant_docs":["hf-course__chapter1__7.md"]}
+{"id":"h17","category":"ood","query":"怎么用 Python 读取 Excel 文件？","anchors":[],"relevant_docs":[]}
+{"id":"h18","category":"ood","query":"明天北京天气怎么样？","anchors":[],"relevant_docs":[]}
+{"id":"h19","category":"ood-adjacent","query":"PyTorch 的 DataLoader 怎么开启多进程加载？","anchors":[],"relevant_docs":[]}
+{"id":"h20","category":"ood-pseudo","query":"BERT 一共有多少层？","anchors":[],"relevant_docs":[]}

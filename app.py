@@ -24,7 +24,22 @@ if st.button("查询") and q:
         result = answer(q)
     st.markdown("### 回答")
     st.write(result["answer"])
+    check = result.get("citation_check")
+    if check and result["sources"]:
+        if check["invalid"]:
+            st.warning("以下引用不在本次上下文中:" + "、".join(check["invalid"]))
+        elif check["no_citation"]:
+            st.warning("回答没有标注任何来源")
     with st.expander("引用来源"):
         for s in result["sources"]:
-            st.markdown(f"**{s.doc}#{s.chunk_id}**  distance = {s.vector_distance:.3f}")
+            # 混合检索下每个块只带自己那一路的分数:BM25 独有的块没有 vector_distance。
+            # 无条件格式化 {: .3f} 会在 None 上抛 TypeError。
+            parts = []
+            if s.vector_distance is not None:
+                parts.append(f"dist {s.vector_distance:.3f}")
+            if s.bm25_score is not None:
+                parts.append(f"bm25 {s.bm25_score:.2f}")
+            if s.fusion_score is not None:
+                parts.append(f"rrf {s.fusion_score:.4f}")
+            st.markdown(f"**{s.doc}#{s.chunk_id}**  " + " · ".join(parts))
             st.text(s.text[:300])

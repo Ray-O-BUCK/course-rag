@@ -43,7 +43,11 @@ RESULTS_PATH = EVAL_DIR / "results" / "ablation.jsonl"
 
 # 每推进一个 Phase 往这里加一个名字。这些名字同时是报告里的列名,
 # 定了就别改 —— 改了等于历史上所有日志的 config 列失效。
-CONFIGS: tuple[str, ...] = ("vector",)  # Phase 2 加 "hybrid",Phase 3 加 "hybrid_rerank"
+# bm25 是混合检索的对照组:不加它就只能证明"hybrid 比 vector 好",
+# 证明不了"融合比最强的单路好"。
+CONFIGS: tuple[str, ...] = ("vector", "bm25", "hybrid","hybrid_rerank")
+# 实验配置不放进默认全量跑:它会调 LLM 改写,不适合每次默认执行
+EXTRA_CONFIGS: tuple[str, ...] = ("hybrid_rerank_rewrite",)
 
 # 报告要算的名次截断点。超过实跑 k 的会被丢掉并提示,不静默算出个假的 MRR@10。
 REPORT_KS: tuple[int, ...] = (1, 3, 5, 10, 20)
@@ -64,11 +68,12 @@ def corpus_tag(store) -> str:
     return h.hexdigest()[:12]
 
 
-def collect(configs: list[str], k: int) -> tuple[str, str, dict]:
-    """跑检索并落盘。返回 (run_id, corpus_tag, {config: [(item, ranked, gold)]})。"""
+def collect(configs: list[str], k: int, eval_path: Path) -> tuple[str, str, dict, int]:
+    """跑检索并落盘。返回 (run_id, corpus_tag, {config: [(item, ranked, gold)]}, 写入行数)。"""
     from db import collection  # 延迟到调用时再建 Chroma client
 
-    items = load_eval_set()
+    items = load_eval_set(eval_path)
+    eval_name = eval_path.stem
     store = load_store(collection)
     tag = corpus_tag(store)
     run_id = time.strftime("%Y%m%d-%H%M%S")
@@ -87,6 +92,7 @@ def collect(configs: list[str], k: int) -> tuple[str, str, dict]:
                 for c in chunks:
                     f.write(json.dumps({
                         "run_id": run_id,
+                        "eval_set": eval_name,
                         "corpus_tag": tag,
                         "config": name,
                         "qid": item["id"],
@@ -151,9 +157,11 @@ def print_summary(tag: str, results: dict, ks: list[int]) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="跑检索消融并落盘名次")
-    ap.add_argument("--config", action="append", choices=list(CONFIGS),
+    ap.add_argument("--config", action="append", choices=list(CONFIGS + EXTRA_CONFIGS),
                     help=f"只跑指定配置,可重复。默认全部:{', '.join(CONFIGS)}")
     ap.add_argument("--k", type=int, default=COARSE_K, help=f"每路取多少候选(默认 COARSE_K={COARSE_K})")
+    ap.add_argument("--eval-set", default=str(EVAL_DIR / "eval_set_chunks.jsonl"),
+                    help="评测集 JSONL(默认 dev 集)")
     args = ap.parse_args()
 
     ks = [n for n in REPORT_KS if n <= args.k]
@@ -163,7 +171,8 @@ def main() -> None:
     if 10 not in ks:
         print("注意:k<10 时 MRR@10 / nDCG@10 无意义,本次不报这两项")
 
-    run_id, tag, results, n_lines = collect(args.config or list(CONFIGS), args.k)
+    run_id, tag, results, n_lines = collect(args.config or list(CONFIGS), args.k, Path(args.eval_set))
+    print(f"eval_set {args.eval_set}")
     print(f"run_id {run_id} -> {RESULTS_PATH}(追加 {n_lines} 行)")
     print_summary(tag, results, ks)
 
