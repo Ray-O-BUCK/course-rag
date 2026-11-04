@@ -11,9 +11,20 @@
 ![demo](docs/demo.png)
 <!-- 放一张 Streamlit 问答 + 引用展开的截图 -->
 
-
-
 ---
+
+## 目录
+
+- [为什么做这个](#为什么做这个)
+- [架构](#架构)
+- [快速开始](#快速开始)
+- [语料](#语料)
+- [核心设计决策](#核心设计决策)
+- [评测](#评测)
+- [踩坑与优化](#踩坑与优化)
+- [项目结构](#项目结构)
+- [路线图](#路线图)
+- [局限](#局限)
 
 ## 为什么做这个
 
@@ -48,10 +59,11 @@ flowchart LR
         Gv --> H[RRF 融合<br/>只吃名次]
         Gb --> H
         H --> H2[cross-encoder 重排<br/>bge-reranker-base]
-        H2 --> I{"候选里最小的<br/>向量距离超阈值?"}
+        H2 --> I{"候选里最大的<br/>rerank 分数低于阈值?"}
         I -->|是| J[拒答]
-        I -->|否| K[拼上下文]
-        K --> L[LLM 生成]
+        I -->|否| K[逐块过滤<br/>rerank_score >= 0.02]
+        K --> K2[拼上下文]
+        K2 --> L[LLM 生成]
         L --> M[回答 + 引用来源]
     end
     subgraph 评测
@@ -63,7 +75,7 @@ flowchart LR
     N -.-> Gb
 ```
 
-`Retriever` 是一个 Protocol，不是具体类。目前有四个实现：`VectorRetriever`（精确平方 l2）、`BM25Retriever`（手写 BM25）、`HybridRetriever`（RRF 融合前两者）、`RerankPipeline`（包住任意粗排检索器，用 cross-encoder 重排），由 `retrieval/pipeline.py` 的工厂按 `config.RETRIEVER` 选择。
+`Retriever` 是一个 Protocol，不是具体类。生产链路有四个实现：`VectorRetriever`（精确平方 l2）、`BM25Retriever`（手写 BM25）、`HybridRetriever`（RRF 融合前两者）、`RerankPipeline`（包住任意粗排检索器，用 cross-encoder 重排），由 `retrieval/pipeline.py` 的工厂按 `config.RETRIEVER` 选择。另有只用于消融实验的 `QueryRewriteRetriever`，默认不启用。
 
 P2 加 BM25 时这个接缝兑现了：`rag.py` 的生成逻辑和拒答判定一行没改。唯一的改动在拒答门的输入上——融合后 top-1 可能来自 BM25、没有向量分数，所以从 `candidates[0].vector_distance` 改成"候选里最小的向量距离"。这是 bug 修复，不是接口变更。
 
@@ -76,12 +88,10 @@ P3 加重排复用了同一个接缝：`RerankPipeline` 是一个装饰器——
 ### 1. 安装依赖
 
 ```bash
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
-
-
 
 ### 2. 下载模型到本地
 
@@ -89,8 +99,6 @@ pip install -r requirements.txt
 hf download BAAI/bge-small-zh-v1.5 --local-dir models/bge-small-zh-v1.5
 hf download BAAI/bge-reranker-base --local-dir models/bge-reranker-base
 ```
-
-
 
 > `huggingface-cli` 已废弃，新命令是 `hf`。国内网络慢可先设 `HF_ENDPOINT=https://hf-mirror.com`。
 >
@@ -106,8 +114,6 @@ LLM_BASE_URL=https://api.deepseek.com/v1
 LLM_MODEL=deepseek-chat
 ```
 
-
-
 ### 4. 入库
 
 把文档放到 `data/raw/`，然后：
@@ -116,15 +122,11 @@ LLM_MODEL=deepseek-chat
 python ingest.py
 ```
 
-
-
 ### 5. 启动界面
 
 ```bash
 streamlit run app.py
 ```
-
-
 
 ### 6. 运行评测
 
@@ -132,11 +134,11 @@ streamlit run app.py
 python eval/anchors.py              # 校验评测集锚点在当前语料上唯一(命中 0 或 >=2 块即报错)
 python scripts/compare_bm25.py      # 手写 BM25 与 rank_bm25.BM25Okapi 对拍(需 pip install rank_bm25)
 python eval/run_ablation.py         # 跑检索 -> 落盘 JSONL -> 打印指标表
+python eval/run_ablation.py --eval-set eval/holdout.jsonl --config hybrid_rerank  # holdout 最终配置
 python eval/calibrate_threshold.py  # 拒答阈值标定(扫 TPR/FPR)
+python eval/eval_faithfulness.py --limit 10  # 引用校验/覆盖率(LLM 调用,先跑 10 条)
 python eval/run_eval.py             # 端到端回归(含 LLM 生成,需要 key)
 ```
-
-
 
 ------
 
@@ -157,7 +159,7 @@ python eval/run_eval.py             # 端到端回归(含 LLM 生成,需要 key)
 
 清洗掉六类标记噪音:Notion 锚点 `[[..]]`、`:numref:` 指令、HTML 注释、mdx `import` 语句、独占一行的标签、跨行自闭合 JSX 组件。
 
-清洗是**最容易出静默错误**的一环:规则写错不会报错,只会让文件变小、回答变差,而这两件事都很难归因。所以抓取时加了一条不变量——**只删标记的规则,不该改变代码围栏的奇偶性**:清洗后数一遍 ``` 的个数,奇数就说明某条正则吞掉了正文,直接 `raise`。见踩坑 #7。
+清洗是**最容易出静默错误**的一环:规则写错不会报错,只会让文件变小、回答变差,而这两件事都很难归因。所以抓取时加了一条不变量——**只删标记的规则,不该改变代码围栏的奇偶性**:清洗后数一遍代码围栏标记的个数,奇数就说明某条正则吞掉了正文,直接 `raise`。见踩坑 #7。
 
 ---
 
@@ -202,15 +204,15 @@ RRF 只吃名次：`score(d) = Σ_r w_r / (k + rank_r(d))`。名次是两路唯�
 >
 > 向量距离很近（都在讲 Transformer），但那段文字没有回答参数数量。
 
-这个失败模式在阈值标定里已经量化过：5 条伪相关 OOD 埋在正样本的 p25~p75 区间里，双塔分不开。
+这个失败模式在 P3 的向量阈值分析里已经量化过：5 条伪相关 OOD 埋在正样本的 p25~p75 区间里，双塔分不开。
 
 Cross-encoder 把 `[query, passage]` 拼成一个序列一起送进 Transformer，每一层 attention 都能让 query 的 token 直接看过 passage 的 token。它对"这段文字回答了这个问题吗"的判断比双塔敏锐得多。
 
 代价是它没有可预先计算的表示：每个 `(query, doc)` 对都要跑一次完整前向，N 个候选就是 N 次。所以只能用在粗排之后的小候选集上——这就是两段式的全部理由：
 
-```
-召回   双塔 + BM25 各取 20 → RRF   （便宜、看名次、保证召回）
-排序   cross-encoder 精修这 20 个   （贵、看交互、换 top-1 精度）
+```text
+召回   双塔 + BM25 各取 30 → RRF   （便宜、看名次、保证召回）
+排序   cross-encoder 精修这 30 个   （贵、看交互、换 top-1 精度）
 ```
 
 反过来（重排全库 884 块）单查询就是 884 次前向，不可接受。
@@ -218,7 +220,7 @@ Cross-encoder 把 `[query, passage]` 拼成一个序列一起送进 Transformer�
 两个实现细节：
 
 - **输入是裸 `(query, passage)` 对。** bge 的指令前缀只属于 embedding 的查询侧；reranker 的训练分布是裸对，加前缀等于把输入推出分布外。
-- **重排不能截断候选。** 拒答门读候选里的最大 rerank 分数（或最小 `vector_distance`，取决于 `GATE_SIGNAL`），一旦重排层把 20 个截成 10 个，被截掉的块不再参与，闸门口径就变了。所以 `retrieve` 返回 `min(k, len(candidates))`，截断统一交给 `rag.py` 的 `FINAL_K`。
+- **重排不能截断候选。** 拒答门读候选里的最大 rerank 分数（或最小 `vector_distance`，取决于 `GATE_SIGNAL`），一旦重排层把 30 个截成 10 个，被截掉的块不再参与，闸门口径就变了。所以 `retrieve` 返回 `min(k, len(candidates))`，截断统一交给 `rag.py` 的 `FINAL_K`。
 
 实测收益见[评测](#四路检索消融)：R@1 从 0.391 提到 **0.578**，MRR@10 从 0.577 提到 **0.728**；R@20 从 0.922 到 **0.945**，其中一部分来自 COARSE_K 20→30 的更大候选池，不全是重排的功劳。
 
@@ -226,19 +228,17 @@ Cross-encoder 把 `[query, passage]` 拼成一个序列一起送进 Transformer�
 
 一句话：Chroma 1.5.9 的近似检索跨进程不可复现，而消融实验的前提是"数字的变化来自配置，不来自索引抖动"。884 块 × 512 维的暴力检索是毫秒级，没有理由拿可复现性去换延迟。完整诊断和代价见[踩坑 #9](#9-chroma-的-hnsw-跨进程不可复现)。
 
-### 为什么分块带 overlap？
+### 为什么按标题切块，而不是定长窗口？
 
-按 300 字符切块，块间重叠 60 字符。固定长度切块会切断句子，overlap 保证跨块语义在至少一个块中完整出现，减少检索时的上下文丢失。
+当前 `CHUNK_MODE="structure"`：先按 Markdown 标题切段，把 `文档标题 > 小节` 的 breadcrumb 写进块；超过 `STRUCT_CHUNK_MAX=500` 的段优先按空行拆，单段仍超长才按句子/字符切，并在字符窗口边界使用 `STRUCT_CHUNK_OVERLAP=80`。标题边界是天然语义边界，不需要 overlap；overlap 只在被迫切穿长段时使用。
 
-代价是有 60 字符的"歧义区"：落在这里的句子同时属于相邻两块。评测集的锚点标注必须避开它（见踩坑 #8）。
-
-**这套分块后来被数据证明是当前的瓶颈**：64 道有 gold 的题里 11 道 gold 块没进 top-20，其中 6 道目标文档排在前 20 名以内——文档找对了，块找错了。定长窗口不看标题、不看段落边界，切出来的块是"什么都沾一点"的语义平均值。P4 已换成标题感知的结构分块，结果见[评测](#四路检索消融)章。
+旧的 fixed 分块是 300 字符窗口 + 60 字符 overlap。它保证跨块语义至少完整出现一次，但制造了 60 字符的"歧义区"：落在这里的句子同时属于相邻两块，锚点必须避开（见踩坑 #8）。更关键的是它不看标题、不看段落边界，切出来的块是"什么都沾一点"的语义平均值。实测 64 道有 gold 的题里 11 道 gold 块没进 top-20，其中 6 道目标文档已排在前 20——文档找对了，块找错了。P4 换成结构分块并扩大候选池后，R@1 0.531→0.578、R@10 0.883→0.898，但多块题仍有上下文召回损失（见[评测](#四路检索消融)章）。
 
 ### 为什么需要拒答？
 
 向量检索**永远会返回 top-K**，哪怕问题跟资料完全无关。如果不判断，LLM 会拿着不相关的段落硬编答案。
 
-所以加了距离阈值：最相关的块距离超过阈值，直接拒答，返回固定话术“根据现有资料无法回答该问题”。
+所以加了拒答闸门：当前读候选里最大的 rerank 分数，低于 `RERANK_THRESHOLD=0.16` 就直接拒答，返回固定话术"根据现有资料无法回答该问题"；`GATE_SIGNAL="vector"` 时退回最小向量距离。阈值怎么定见[拒答阈值标定](#拒答阈值标定)章。
 
 ### 为什么要求固定引用格式？
 
@@ -283,7 +283,7 @@ System prompt 要求模型用 `[doc:文件名#块编号]` 标注来源。固定�
  "relevant_docs": ["d2l-zh__chapter_attention-mechanisms__multihead-attention.md"]}
 ```
 
-锚点是目标块内的**唯一短句**，评测时反查"包含该句的块"得到 chunk key。这样换分块策略、chunk_id 全部漂移后评测集依然有效——Phase 4 重切语料时不用重标。硬编码 chunk_id 的话，调一次 chunk_size 就得重标一次，实际上等于不允许调。
+锚点是目标块内的**唯一短句**，评测时反查"包含该句的块"得到 chunk key。这样换分块策略、chunk_id 全部漂移后评测集依然有效——P4 从 1210 块 fixed 切成 884 块 structure 时已经验证过，81 条锚点不用重标。硬编码 chunk_id 的话，调一次 chunk_size 就得重标一次，实际上等于不允许调。
 
 代价是锚点必须在全库唯一。884 块靠人眼查不现实，所以写了 `scripts/suggest_anchors.py`：给候选句，报它命中几块、落在哪、偏移多少；撞车时自动扩成"刚好唯一"的最短片段。`eval/anchors.py` 在跑评测前校验全部 81 条，**命中 0 块或 ≥2 块直接抛错**——在边界处响亮失败，好过把 gold 悄悄算错。
 
@@ -331,7 +331,7 @@ partial 的融合截断被 COARSE_K=30 补上了：BM25、hybrid、hybrid_rerank
 
 ### 融合赢了中段，输了 top-1 和 R@20
 
-新语料上 BM25 单路在 R@1（0.492 vs 0.391）、R@3（0.703 vs 0.609）、R@20（0.930 vs 0.922）和 MRR@10（0.642 vs 0.571）上都赢 hybrid；hybrid 只在 R@5（0.750 vs 0.734）和 R@10（0.883 vs 0.836）上领先。旧语料是"融合赢召回、输 top-1"，结构分块之后 BM25 的深召回优势变大，融合截断到 20 块时反而挤掉 BM25 找到的 gold。
+新语料上 BM25 单路在 R@1（0.492 vs 0.391）、R@3（0.703 vs 0.609）、R@20（0.930 vs 0.922）和 MRR@10（0.642 vs 0.571）上都赢 hybrid；hybrid 只在 R@5（0.750 vs 0.734）和 R@10（0.883 vs 0.836）上领先。旧语料是"融合赢召回、输 top-1"，结构分块之后 BM25 的深召回优势变大，融合后取前 20 时反而挤掉 BM25 找到的 gold。
 
 先排除实现问题：两路各取 30，并集平均 39.2 块（最少 30、最多 45），符合预期；hybrid 的 top-1 有 43/81 与 BM25 的 top-1 相同——不是"融合把 BM25 的结果丢了"。
 
@@ -342,7 +342,7 @@ partial 的融合截断被 COARSE_K=30 补上了：BM25、hybrid、hybrid_rerank
 - **paraphrase（向量优势区）**：hybrid 的 R@1 / R@5 是 0.429 / 0.857，重排后 0.571 / 0.857；重排主要修 R@1。
 - **term-match（BM25 优势区）**：BM25 R@1 = 0.800，hybrid 只有 0.480——融合把 BM25 精准的 top-1 稀释掉了。hybrid 的 R@20 = 1.000，gold 全在候选池里；重排把 R@1 拉回 0.760，仍略低于 BM25 的 0.800。
 
-**结论：RRF 适合当召回层，不适合当排序层，但它截断到 20 块时会损失 BM25 的深召回。** 当前做法是"融合拿 30 块候选池，再用交叉编码器重排"；hybrid_rerank 的 R@1 0.578、MRR@10 0.728，超过 BM25 单路的 0.492 / 0.642，R@20 0.945 也反超 BM25 的 0.930。COARSE_K=30 基本补上了融合截断——partial 的 R@20 从 0.625 回到 0.750。
+**结论：RRF 适合当召回层，不适合当排序层；只看融合后的前 20 时，它会损失 BM25 的深召回。** 当前做法是"融合拿 30 块候选池，再用交叉编码器重排"；hybrid_rerank 的 R@1 0.578、MRR@10 0.728，超过 BM25 单路的 0.492 / 0.642，R@20 0.945 也反超 BM25 的 0.930。COARSE_K=30 基本补上了融合截断——partial 的 R@20 从 0.625 回到 0.750。
 
 旧语料上试过用权重救：把向量权重压到 0.3，hybrid 的 R@1 从 0.375 回到 0.453、MRR 从 0.556 到 0.630，仍未过 BM25 单路的 0.484 / 0.648；而且这组权重是在同一份评测集上选的，等于拿测试集调参。`config.RRF_WEIGHTS` 保留等权 (1.0, 1.0)，理由写在注释里。新语料没有重跑这组权重实验。
 
@@ -364,7 +364,7 @@ partial 的融合截断被 COARSE_K=30 补上了：BM25、hybrid、hybrid_rerank
 
 **但那 5 条无重叠的题给了方向性的证据**（n=5，只当信号看不当结论）：gold 块进 top-20 的条数，vector 5/5、hybrid 4/5、**BM25 只有 2/5**。完全没有词面重叠时，词法信号就废了——两路的互补性是真实的，只是被评测集的偏置盖住了。
 
-所以 README 里所有"BM25 比 X 好"的结论都该带着这个折扣读。这也是[局限](#局限)里"没有 holdout、评测集同源"的具体表现。
+所以 README 里所有"BM25 比 X 好"的结论都该带着这个折扣读。这也是[局限](#局限)里"评测集同源、holdout 只做 sanity check"的具体表现。
 
 ### 拒答阈值标定
 
@@ -497,7 +497,7 @@ h13（三种 tokenizer 的预分词器）的 WordPiece gold 块 `chapter6__8#11`
 
 另一类问题在自建笔记上：c10/c11/c12/c17/c27 的目标是 `nn.md`（3 块）、`transformer.md`（4 块）、`project.md`（3 块）。问 "ResNet 是什么"，`nn.md` 的三块排到第 79 / 201 / 985 名——300 字的笔记摘要块在教材正文里被淹没（名次是旧 fixed 分块、1210 块下的）。
 
-**P4 重跑结果（结构分块，884 块，指纹 `85f63cd9417e`）**：c49 被捞回（BM25 第 2、rerank 第 3）；c21 反而掉出候选池（新块向量距离 1.0410，top-20 截止 0.9816）；c70 仍被融合截断，rerank 只给 0.203；c68/c69 的锚点只提到模型名，没有回答所问的区别/结构。所以"分块是唯一瓶颈"要修正为：分块改善了 top-1/top-10，但深召回缺口里混着融合截断和标注问题。
+**P4 重跑结果（结构分块，884 块，指纹 `85f63cd9417e`）**：c49 被捞回（BM25 第 2、rerank 第 3）；c21 反而掉出候选池（新块向量距离 1.0410，top-20 截止 0.9816）；c70 进了 top-30，但 rerank 只给 0.203，过不了闸门；c68/c69 的锚点只提到模型名，没有回答所问的区别/结构。所以"分块是唯一瓶颈"要修正为：分块改善了 top-1/top-10，但深召回缺口里混着融合、闸门和标注问题。
 
 ### 附录：指标口径
 
@@ -515,22 +515,18 @@ h13（三种 tokenizer 的预分词器）的 WordPiece gold 块 `chapter6__8#11`
 
 **修复**：所有项目内路径锚定 `Path(__file__)`：
 
-```
+```python
 BASE_DIR = Path(__file__).resolve().parent
 CHROMA_PATH = str(BASE_DIR / "data" / "chroma")
 ```
 
-
-
 并在评测脚本开头加空库检查，把静默失败变成显式报错：
 
-```
+```python
 if collection.count() == 0:
     print("错误: Chroma 集合为空, 请先运行 python ingest.py")
     sys.exit(1)
 ```
-
-
 
 ### 2. 距离阈值误拒相关问题
 
@@ -578,7 +574,7 @@ if collection.count() == 0:
 
 **修复**：在结束引号前加 `[^>\n]*\n`，要求开始标签不在同一行闭合。
 
-**更有价值的修复是那道守卫**：清洗后数一遍 ``` 的个数，**奇数就说明某条规则吞掉了正文**（代码围栏必然成对）。这个奇偶校验在 `fetch_corpus.py` 里直接 `raise`。
+**更有价值的修复是那道守卫**：清洗后数一遍代码围栏标记的个数，**奇数就说明某条规则吞掉了正文**（代码围栏必然成对）。这个奇偶校验在 `fetch_corpus.py` 里直接 `raise`。
 
 需要说清楚的是：**这个 bug 是靠肉眼看文件体积不对发现的**（172 KB → 141 KB），不是靠守卫——守卫是修完之后才加的。体积异常是个很弱的信号，得先知道原文件多大才看得出来，而清洗规则改动频繁，没人记得住每个文件该多大。守卫把"感觉体积不太对"换成了一条明确的断言：**只删标记的规则不该改变代码围栏的奇偶性**。下次同类的正则错误会在抓取阶段就炸，而不是等到入库以后发现回答变差。
 
@@ -667,9 +663,7 @@ course-rag/
 └── README.md
 ```
 
-**`ScoredChunk` 是后续所有阶段的共同数据格式**——同一个对象上挂 `vector_distance` / `bm25_score` / `fusion_score` / `rerank_score` 四个分数，每个检索器只填自己那一个。这样加一路检索器不用改调用方，也天然避免了"把三种不同尺度的分数直接相加"这个经典错误：RRF 只吃名次，拒绝门只看 `vector_distance`。
-
-
+**`ScoredChunk` 是后续所有阶段的共同数据格式**——同一个对象上挂 `vector_distance` / `bm25_score` / `fusion_score` / `rerank_score` 四个分数，每个检索器只填自己那一个。这样加一路检索器不用改调用方，也天然避免了"把三种不同尺度的分数直接相加"这个经典错误：RRF 只吃名次，拒答门看 `GATE_SIGNAL` 选的那一路信号。
 
 ------
 
@@ -717,7 +711,7 @@ course-rag/
 - **精确检索有规模上限**。当前 884 块全量计算是毫秒级；块数上万后内存到数百 MB、单次查询到几十毫秒，那时必须换回 ANN 或分层索引。这是有意做的一笔交易，边界写在这里。
 - **分块仍有粒度问题**。结构分块修掉了"文档对、块不对"的一部分问题，但 c21 这类答案落在长块尾部的题反而被稀释；多块题也因为按节切分丢了跨小节上下文。按块过滤（0.02）做了，但它只去掉极弱块，救不了块内稀释。
 - **自建笔记被开源语料淹没**。几块的小文档在 884 块里排到几百名。目前把两类语料混在一起报指标，掩盖了这个问题，应该分开列。
-- **引用校验只到"落地"，没到"忠实"**。202/202 引用合法，但 c68/c69 说明"引用真实块"不等于"块支持结论"；语义忠实度需要 LLM judge 或人工标注。
+- **引用校验只到"落地"，没到"忠实"**。202/202 引用合法，但 h17 这类"引用了一个真实块、结论仍未被支持"的情况校验不出来；语义忠实度需要 LLM judge 或人工标注。
 - **严格引用模式只保证引用存在，不保证回答正确**。无有效引用即拒答能过滤 c80/h19 这类，但 h17（Excel）仍能带着合法引用被回答；引用校验替代不了语义忠实度。
 - **多块题的上下文召回是当前主要失败模式**。10 条语义抽样里 2 条说"资料没讲"，实际 gold 块在库里但没进 kept；对应的 holdout multi-chunk R@10 只有 0.667。
 - **`FINAL_K` 仍是 10，这次是量出来的**。重排后 R@5 = 0.867、R@10 = 0.898，收到 5 会丢 3.1 个点的覆盖率。重排让排序变好，但没到"前 5 块就够用"的程度。之前保留 10 是将就，现在有数字支撑。
