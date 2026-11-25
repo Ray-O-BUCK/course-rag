@@ -55,9 +55,11 @@ _model:CrossEncoder | None = None
 def get_reranker() -> CrossEncoder:
     global _model
     if _model is None:
-        # max_length=512 与 CHUNK_SIZE=300 是配套的:中文 1 字约 1~1.5 token,
-        # 300 字的块加上 query 仍在 512 以内,不会被截断。
-        # 改了分块大小就要重新核对这里,否则块尾会被静默切掉。
+        # max_length=512 按实测定的,不是按字数折算:本语料 884 块里最长的一块
+        # 500 字,用本模型的 tokenizer 编码是 359 token;最长 query 16 token,
+        # 全量 66 道有回答的题里没有一对超过 512,块尾没有被静默切掉。
+        # 注意中文这里约 1.4 字/token,不能按"1 字 ≈ 1 token"估 ——
+        # 改分块大小后要用 tokenizer 重新量,不要靠字符数推算。
         _model = CrossEncoder(str(BASE_DIR / "models" / RERANKER_MODEL), max_length=512)
     return _model
 

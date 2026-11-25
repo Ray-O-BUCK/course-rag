@@ -41,14 +41,19 @@ def validate_citations(text: str, chunks: list[ScoredChunk]) -> dict:
 pipeline = build_retriever()
 
 def build_context(chunks: list[ScoredChunk], max_chars: int = CONTEXT_MAX_CHARS) -> str:
-    """按顺序拼参考资料, 超出字符预算就截断 -- 不在无脑塞满 top_k。"""
+    """按顺序拼参考资料, 超出字符预算就截断 -- 不在无脑塞满 top_k。
+
+    预算是硬上限,块之间的 "\\n\\n" 也计入;否则实际 prompt 会比 max_chars 长,
+    预算就只是个近似值。
+    """
     parts, total = [], 0
     for c in chunks:
         block = f"[doc:{c.doc}#{c.chunk_id}]\n{c.text}"
-        if parts and total + len(block) > max_chars:
+        extra = len(block) + (2 if parts else 0)   # 2 = 块间分隔 "\n\n"
+        if parts and total + extra > max_chars:
             break
         parts.append(block)
-        total += len(block)
+        total += extra
     return "\n\n".join(parts)
 
 def _should_refuse(candidates:list[ScoredChunk]) -> bool:
