@@ -40,21 +40,26 @@ def validate_citations(text: str, chunks: list[ScoredChunk]) -> dict:
 # 管线在模块加载时装配一次;模型/索引都是懒加载,这里只是组装对象
 pipeline = build_retriever()
 
-def build_context(chunks: list[ScoredChunk], max_chars: int = CONTEXT_MAX_CHARS) -> str:
+def build_context(chunks: list[ScoredChunk],
+                  max_chars: int = CONTEXT_MAX_CHARS) -> tuple[str, list[ScoredChunk]]:
     """按顺序拼参考资料, 超出字符预算就截断 -- 不在无脑塞满 top_k。
 
     预算是硬上限,块之间的 "\\n\\n" 也计入;否则实际 prompt 会比 max_chars 长,
     预算就只是个近似值。
+
+    返回 (context, 实际装进去的块)。引用校验必须拿后者比对:模型只见过装进去的
+    块,拿 kept 比对会把"预算截掉、模型却编出了 key"的引用判成有效。
     """
-    parts, total = [], 0
+    parts, used, total = [], [], 0
     for c in chunks:
         block = f"[doc:{c.doc}#{c.chunk_id}]\n{c.text}"
         extra = len(block) + (2 if parts else 0)   # 2 = 块间分隔 "\n\n"
         if parts and total + extra > max_chars:
             break
         parts.append(block)
+        used.append(c)
         total += extra
-    return "\n\n".join(parts)
+    return "\n\n".join(parts), used
 
 def _should_refuse(candidates:list[ScoredChunk]) -> bool:
     """拒答闸门。信号由 config.GATE_SIGNAL 选择,语义见 config.py 的注释。
@@ -103,16 +108,19 @@ def answer(query: str, top_k: int = COARSE_K) -> dict:
     # 真出现就是两个阈值口径漂了,宁可报错也不把空上下文送进 LLM。
     if not kept:
         raise RuntimeError("闸门放行但逐块过滤后没有候选,两个阈值口径不一致")
+    context, shown = build_context(kept)
     messages = [
         {"role": "system", "content": SYSTEM},
-        {"role": "user", "content": f"参考资料:\n{build_context(kept)}\n\n问题: {query}"},
+        {"role": "user", "content": f"参考资料:\n{context}\n\n问题: {query}"},
     ]
     text = chat(messages)
-    check = validate_citations(text, kept)
+    # 和模型实际看到的块比对,不是和 kept 比对:预算截掉的块模型没见过,
+    # 引用它们只能是编的(见 build_context 的说明)。
+    check = validate_citations(text, shown)
     if STRICT_CITATION and not check["valid"]:
         return {"answer": REFUSAL, "sources": [], "citation_check": check, "strict_citation": True}
     return {
         "answer": text,
-        "sources": kept,
+        "sources": shown,
         "citation_check": check
     }
